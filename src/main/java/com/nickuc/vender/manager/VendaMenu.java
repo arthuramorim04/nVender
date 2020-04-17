@@ -13,8 +13,10 @@
 
 package com.nickuc.vender.manager;
 
-import com.nickuc.vender.ncore.lite.itemstack.Item;
-import com.nickuc.vender.settings.Settings;
+import com.nickuc.ncore.api.plugin.bukkit.itemstack.Item;
+import com.nickuc.vender.settings.SettingsEnum;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -23,26 +25,19 @@ import org.bukkit.inventory.ItemStack;
 
 public class VendaMenu {
 
+	@AllArgsConstructor @Getter
 	private enum Type {
 
 		AUTO_VENDA("§7Auto-Venda"), VENDA_SHIFT("§7Venda Shift"), VENDA("§7Vender");
 
 		private final String displayName;
 
-		Type(String displayName) {
-			this.displayName = displayName;
-		}
-
-		public String getDisplayName() {
-			return displayName;
-		}
-
 		public boolean getStatus(Player player) {
 			switch (this) {
 				case AUTO_VENDA:
-					return Settings.autoVenda.contains(player.getName());
+					return SettingsEnum.autoVenda.contains(player.getName());
 				case VENDA_SHIFT:
-					return Settings.vendaShift.contains(player.getName());
+					return SettingsEnum.vendaShift.contains(player.getName());
 			}
 			return false;
 		}
@@ -56,7 +51,7 @@ public class VendaMenu {
 				.build();
 
 		if(vendaType != Type.VENDA) {
-			itemBuilder.setDurability(vendaType.getStatus(player) ? 10 : 8);
+			itemBuilder.durability(vendaType.getStatus(player) ? 10 : 8);
 		}
 		return itemBuilder.createItem();
 	}

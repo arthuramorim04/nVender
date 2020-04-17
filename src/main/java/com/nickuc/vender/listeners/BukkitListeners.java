@@ -13,13 +13,14 @@
 
 package com.nickuc.vender.listeners;
 
+import com.nickuc.ncore.api.plugin.bukkit.listener.Listener;
+import com.nickuc.ncore.api.settings.Settings;
 import com.nickuc.vender.manager.VendaCore;
 import com.nickuc.vender.manager.VendaMenu;
 import com.nickuc.vender.nVender;
-import com.nickuc.vender.settings.Settings;
+import com.nickuc.vender.settings.SettingsEnum;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -28,16 +29,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
-public class BukkitListeners implements Listener {
+public class BukkitListeners extends Listener<nVender> {
 	
 	private static final ArrayList<String> delay = new ArrayList<>();
-
-	private final nVender plugin;
-
-	public BukkitListeners(nVender plugin) {
-		this.plugin = plugin;
-	}
 
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent e) {
@@ -50,16 +46,16 @@ public class BukkitListeners implements Listener {
 				String display = item.getItemMeta().getDisplayName();
 				switch (display) {
 					case "§7Auto-Venda":
-						if (!p.hasPermission(Settings.PERMISSION_AUTOMATICO.getString())) {
+						if (!p.hasPermission(Settings.getString(SettingsEnum.PERMISSION_AUTOMATICO))) {
 							p.sendMessage("§cVocê não tem permissão para usar a venda automática.");
 							return;
 						}
-						if (Settings.autoVenda.contains(p.getName())) {
+						if (SettingsEnum.autoVenda.contains(p.getName())) {
 							p.sendMessage("§cVocê desativou o modo de venda automática.");
-							Settings.autoVenda.remove(p.getName());
+							SettingsEnum.autoVenda.remove(p.getName());
 						} else {
 							p.sendMessage("§aVocê ativou o modo de venda automática.");
-							Settings.autoVenda.add(p.getName());
+							SettingsEnum.autoVenda.add(p.getName());
 							double delayDouble = plugin.getConfig().getDouble("Config.DelayAutoVenda");
 							if (delayDouble < 0.5) {
 								delayDouble = 2.5;
@@ -70,7 +66,7 @@ public class BukkitListeners implements Listener {
 							timer.scheduleAtFixedRate(new TimerTask() {
 								@Override
 								public void run() {
-									if (Settings.autoVenda.contains(p.getName())) {
+									if (SettingsEnum.autoVenda.contains(p.getName())) {
 										new VendaCore(p, VendaCore.Type.AUTO_VENDA, plugin);
 									} else {
 										cancel();
@@ -85,16 +81,16 @@ public class BukkitListeners implements Listener {
 						new VendaCore(p, VendaCore.Type.VENDA_NORMAL, plugin);
 						return;
 					case "§7Venda Shift":
-						if (!p.hasPermission(Settings.PERMISSION_SHIFT.getString())) {
+						if (!p.hasPermission(Settings.getString(SettingsEnum.PERMISSION_SHIFT))) {
 							p.sendMessage("§cVocê não tem permissão para usar a venda por shift.");
 							return;
 						}
-						if (Settings.vendaShift.contains(p.getName())) {
+						if (SettingsEnum.vendaShift.contains(p.getName())) {
 							p.sendMessage("§cVocê desativou o modo de venda por shift.");
-							Settings.vendaShift.remove(p.getName());
+							SettingsEnum.vendaShift.remove(p.getName());
 						} else {
 							p.sendMessage("§aVocê ativou o modo de venda por shift.");
-							Settings.vendaShift.add(p.getName());
+							SettingsEnum.vendaShift.add(p.getName());
 						}
 						p.closeInventory();
 						VendaMenu.openMenu(p);
@@ -104,7 +100,7 @@ public class BukkitListeners implements Listener {
 	}
 	@EventHandler
 	public void onPlayerToggleSneak(PlayerToggleSneakEvent e) {
-		if (Settings.vendaShift.contains(e.getPlayer().getName())) {
+		if (SettingsEnum.vendaShift.contains(e.getPlayer().getName())) {
 			double delayDouble = plugin.getConfig().getDouble("Config.DelayShift");
 			if (delayDouble <= 0) {
 				new VendaCore(e.getPlayer(), VendaCore.Type.VENDA_SHIFT, plugin);
@@ -113,14 +109,14 @@ public class BukkitListeners implements Listener {
 				if (!delay.contains(e.getPlayer().getName())) {
 					new VendaCore(e.getPlayer(), VendaCore.Type.VENDA_SHIFT, plugin);
 					delay.add(e.getPlayer().getName());
-					plugin.getServer().getScheduler().runTaskLater(plugin, () -> delay.remove(e.getPlayer().getName()), timeLong);
+					plugin.runTaskLater(false, () -> delay.remove(e.getPlayer().getName()), timeLong, TimeUnit.SECONDS);
 				} 
 			}
 		}
 	}
 	@EventHandler
 	public void onPlayerQuit(PlayerQuitEvent e) {
-		Settings.vendaShift.remove(e.getPlayer().getName());
-		Settings.autoVenda.remove(e.getPlayer().getName());
+		SettingsEnum.vendaShift.remove(e.getPlayer().getName());
+		SettingsEnum.autoVenda.remove(e.getPlayer().getName());
 	}
 }
