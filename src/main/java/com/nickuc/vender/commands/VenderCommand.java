@@ -13,17 +13,14 @@
 
 package com.nickuc.vender.commands;
 
-import com.nickuc.ncore.api.config.nConfig;
-import com.nickuc.ncore.api.settings.Messages;
-import com.nickuc.ncore.api.settings.Settings;
-import com.nickuc.ncore.api.plugin.shared.sender.SharedPlayer;
-import com.nickuc.ncore.api.plugin.shared.command.SharedCommand;
-import com.nickuc.ncore.api.plugin.shared.sender.SharedSender;
-import com.nickuc.vender.manager.VendaMenu;
-import com.nickuc.vender.nVender;
-import com.nickuc.vender.settings.MessagesEnum;
-import com.nickuc.vender.settings.SettingsEnum;
-import org.bukkit.entity.Player;
+import com.nickuc.ncore.api.config.*;
+import com.nickuc.ncore.api.plugin.shared.command.*;
+import com.nickuc.ncore.api.plugin.shared.sender.*;
+import com.nickuc.ncore.api.settings.*;
+import com.nickuc.vender.manager.*;
+import com.nickuc.vender.*;
+import com.nickuc.vender.settings.*;
+import org.bukkit.entity.*;
 
 public class VenderCommand extends SharedCommand<nVender> {
 
@@ -59,7 +56,7 @@ public class VenderCommand extends SharedCommand<nVender> {
 
 	private void reload(SharedSender sender) throws Exception {
 		nConfig config = new nConfig("config.yml");
-		if (!config.existsConfig()) {
+		if (!config.exists()) {
 			config.saveDefaultConfig("config.yml");
 		}
 		SettingsEnum.reload(config);

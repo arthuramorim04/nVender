@@ -13,7 +13,7 @@
 
 package com.nickuc.vender.manager;
 
-import com.nickuc.ncore.api.plugin.bukkit.itemstack.Item;
+import com.nickuc.ncore.api.plugin.bukkit.item.ItemBuilder;
 import com.nickuc.vender.settings.SettingsEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,10 +45,8 @@ public class VendaMenu {
 	}
 
 	private static ItemStack getItemStack(Player player, Type vendaType) {
-		Item itemBuilder = Item.builder()
-				.material(vendaType == Type.AUTO_VENDA || (vendaType == Type.VENDA_SHIFT) ? Material.INK_SACK : Material.NAME_TAG)
-				.displayName(vendaType.getDisplayName())
-				.build();
+		ItemBuilder itemBuilder = new ItemBuilder(vendaType == Type.AUTO_VENDA || (vendaType == Type.VENDA_SHIFT) ? Material.INK_SACK : Material.NAME_TAG)
+				.displayName(vendaType.getDisplayName());
 
 		if(vendaType != Type.VENDA) {
 			itemBuilder.durability(vendaType.getStatus(player) ? 10 : 8);

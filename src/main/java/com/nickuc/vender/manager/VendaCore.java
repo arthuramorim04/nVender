@@ -13,99 +13,98 @@
 
 package com.nickuc.vender.manager;
 
-import com.nickuc.ncore.api.logger.ConsoleLogger;
-import com.nickuc.ncore.api.settings.Messages;
-import com.nickuc.ncore.api.settings.Settings;
-import com.nickuc.vender.nVender;
-import com.nickuc.vender.objects.SellItem;
-import com.nickuc.vender.settings.MessagesEnum;
-import com.nickuc.vender.settings.SettingsEnum;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
+import com.nickuc.ncore.api.cache.*;
+import com.nickuc.ncore.api.logger.*;
+import com.nickuc.ncore.api.plugin.shared.sender.*;
+import com.nickuc.ncore.api.settings.*;
+import com.nickuc.ncore.api.utils.val.*;
+import com.nickuc.vender.*;
+import com.nickuc.vender.objects.*;
+import com.nickuc.vender.settings.*;
+import lombok.*;
+import org.bukkit.*;
+import org.bukkit.entity.*;
+import org.bukkit.inventory.*;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.*;
 
 public class VendaCore {
-	
-	private Player player;
-	private Type vendaType;
-	private nVender nvender;
-	@Getter private int quantidade;
-	private double ganhos;
 
-	public VendaCore(Player player, Type vendaType, nVender nvender) {
-		try {
-			this.player = player;
-			this.vendaType = vendaType;
-			this.nvender = nvender;
-			nvender.runTask(Settings.getBoolean(SettingsEnum.RUN_SELL_ASYNC), this::performSell);
-		} catch (Exception e) {
-			e.printStackTrace();
-			player.sendMessage("§cUm erro desconhecido ocorreu...");
+	public static void sell(nVender nvender, Player player, Type type) {
+		Optional<SharedPlayer> sharedPlayerOpt = Cache.getSharedPlayer(player.getName());
+		if (!sharedPlayerOpt.isPresent()) {
+			player.sendMessage("§cOps, parece que você não está incluído no cache. Reporte isso para NickUC#4550.");
+			return;
 		}
+
+		SharedPlayer sharedPlayer  = sharedPlayerOpt.get();
+		if (sharedPlayer.cache().exists("sellLock")) return;
+
+		sharedPlayer.cache().define("sellLock", "");
+		nvender.runTask(Settings.getBoolean(SettingsEnum.RUN_SELL_ASYNC), () -> {
+			try {
+				performSell(nvender, player, type);
+			} catch (Exception e) {
+				e.printStackTrace();
+				player.sendMessage("§cUm erro desconhecido ocorreu...");
+			} finally {
+				sharedPlayer.cache().remove("sellLock");
+			}
+		});
 	}
 
-	public void performSell() {
-		if (checkInventoryIsEmpty()) {
-			if (vendaType == Type.VENDA_NORMAL) player.sendMessage(Messages.getMessage(MessagesEnum.INVENTORY_EMPTY));
+	private static void performSell(nVender nvender, Player player, Type type) {
+		if (!player.isOnline()) return;
+		if (inventoryEmpty(player)) {
+			if (type == Type.VENDA_NORMAL) player.sendMessage(Messages.getMessage(MessagesEnum.INVENTORY_EMPTY));
 			return;
 		}
 		if (SettingsEnum.loadedItens == null || SettingsEnum.loadedItens.size() == 0) {
 			player.sendMessage("§cAinda não existem itens configurados para serem vendidos.");
 			return;
 		}
-		for (ItemStack item : getItensInInventory()) {
-			int amount = item.getAmount();
+
+		int itensSold = 0;
+		double itensMoney = 0;
+		for (ItemStack item : getItensInInventory(player)) {
 			for (ItemStack itemStackConfig : SettingsEnum.loadedItens) {
-				if (item.getType() == itemStackConfig.getType() && (item.getDurability() == itemStackConfig.getDurability())) {
+				if (item.getType() == itemStackConfig.getType() && item.getDurability() == itemStackConfig.getDurability()) {
 					ConsoleLogger.debug(" [Player Inventory] The player contains " + item.getType().name() + ".");
 					SellItem nvenderitem = SellItem.valueOf(nvender, item);
-					double itemValue = nvenderitem.getPrice();
-					double dinheiroAdicionado = itemValue * amount;
-					dinheiroAdicionado = dinheiroAdicionado/nvenderitem.getQuantidade();
-					quantidade = quantidade + amount;
-					ganhos = ganhos + processMultiplicador(dinheiroAdicionado);
-					player.updateInventory();
-					nVender.economy.depositPlayer(player, processMultiplicador(dinheiroAdicionado));
-				}
-			}
-		}
-		ConsoleLogger.debug("[PlayerInventory] Removing itens after sell...");
-		for (ItemStack item : getItensInInventory()) {
-			for (ItemStack itemStack : SettingsEnum.loadedItens) {
-				if (item.getType() == itemStack.getType() && (item.getDurability() == itemStack.getDurability())) {
-					for (int i = 0; i < quantidade; i++) {
+					int amount = item.getAmount();
+					double price = nvenderitem.getPrice();
+					double giveMoney = price * amount;
+					itensSold += amount;
+					itensMoney += processMultiplicador(player, giveMoney/nvenderitem.getQuantidade());
+					for (int i = 0; i < itensSold; i++) {
 						player.getInventory().removeItem(item);
 					}
-					player.updateInventory();
 				}
 			}
 		}
-		if (quantidade == 0) {
-			if (vendaType == Type.VENDA_NORMAL) {
+		player.updateInventory();
+
+		ConsoleLogger.debug("[PlayerInventory] Giving money after sell...");
+		nVender.economy.depositPlayer(player, itensMoney);
+
+		if (itensSold == 0) {
+			if (type == Type.VENDA_NORMAL) {
 				player.sendMessage(Messages.getMessage(MessagesEnum.NO_ITENS));
 			}
 			return;
 		}
-		player.sendMessage(Messages.getMessage(MessagesEnum.VENDIDO).replace("%itens%", String.valueOf(quantidade)).replace("%dinheiro%", String.valueOf(ganhos)));
+		player.sendMessage(Messages.getMessage(MessagesEnum.VENDIDO).replace("%itens%", StringUtils.formatNumber(itensSold)).replace("%dinheiro%", StringUtils.formatNumber(itensMoney)));
 	}
 
-	private boolean checkInventoryIsEmpty() {
+	private static boolean inventoryEmpty(Player player) {
 		PlayerInventory inv = player.getInventory();
 		for (ItemStack i : inv.getContents()) {
-			if (i != null && !(i.getType() == Material.AIR)) {
-				return false;
-			}
+			if (i != null && i.getType() != Material.AIR) return false;
 		}
 		return true;
 	}
 
-	private double processMultiplicador(double valorOriginal) {
+	private static double processMultiplicador(Player player, double valorOriginal) {
 		switch (SettingsEnum.getMultiplicadorType()) {
 
 			case DETECCAO_GRUPO:
@@ -132,7 +131,7 @@ public class VendaCore {
 		return valorOriginal;
 	}
 
-	private ArrayList<ItemStack> getItensInInventory() {
+	private static ArrayList<ItemStack> getItensInInventory(Player player) {
 		ConsoleLogger.debug("Loading itens in " + player.getName() + " inventory...");
 		ItemStack[] contents = player.getInventory().getContents();
 		ArrayList<ItemStack> itens = new ArrayList<>();
@@ -143,10 +142,6 @@ public class VendaCore {
 			}
 		}
 		return itens;
-	}
-
-	public String getGanhos() {
-		return new DecimalFormat("#,##0").format(ganhos);
 	}
 
 	@AllArgsConstructor @Getter

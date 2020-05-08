@@ -131,7 +131,7 @@ public class nVender extends AbstractPlugin {
 
 	private boolean config() throws Exception, InvalidConfigurationException {
 		nConfig config = new nConfig("config.yml");
-		if(!config.existsConfig()) {
+		if(!config.exists()) {
 			config.saveDefaultConfig("config.yml");
 		}
 
