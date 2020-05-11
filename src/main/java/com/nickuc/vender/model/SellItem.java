@@ -11,7 +11,7 @@
  * Este aviso não pode ser removido ou alterado de qualquer distribuição de origem.
  */
 
-package com.nickuc.vender.objects;
+package com.nickuc.vender.model;
 
 import com.nickuc.vender.*;
 import lombok.*;

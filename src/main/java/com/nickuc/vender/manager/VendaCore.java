@@ -19,7 +19,7 @@ import com.nickuc.ncore.api.plugin.shared.sender.*;
 import com.nickuc.ncore.api.settings.*;
 import com.nickuc.ncore.api.utils.val.*;
 import com.nickuc.vender.*;
-import com.nickuc.vender.objects.*;
+import com.nickuc.vender.model.*;
 import com.nickuc.vender.settings.*;
 import lombok.*;
 import org.bukkit.*;

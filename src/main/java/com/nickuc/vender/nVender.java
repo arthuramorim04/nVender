@@ -18,7 +18,7 @@ import com.nickuc.ncore.api.logger.*;
 import com.nickuc.ncore.api.plugin.bukkit.*;
 import com.nickuc.vender.commands.*;
 import com.nickuc.vender.listeners.*;
-import com.nickuc.vender.objects.*;
+import com.nickuc.vender.model.*;
 import com.nickuc.vender.settings.*;
 import net.milkbowl.vault.economy.*;
 import net.milkbowl.vault.permission.*;
