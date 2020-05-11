@@ -13,12 +13,10 @@
 
 package com.nickuc.vender.objects;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
-
-import com.nickuc.vender.nVender;
+import com.nickuc.vender.*;
+import lombok.*;
+import org.bukkit.*;
+import org.bukkit.inventory.*;
 
 @AllArgsConstructor @Getter
 public class SellItem {

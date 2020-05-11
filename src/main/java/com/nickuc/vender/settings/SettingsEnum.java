@@ -12,16 +12,13 @@
 
 package com.nickuc.vender.settings;
 
-import com.nickuc.ncore.api.config.nConfig;
-import com.nickuc.ncore.api.settings.ISettingsEnum;
-import com.nickuc.ncore.api.settings.Settings;
-import com.nickuc.vender.manager.VendaCore;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.bukkit.inventory.ItemStack;
+import com.nickuc.ncore.api.config.*;
+import com.nickuc.ncore.api.settings.*;
+import com.nickuc.vender.manager.*;
+import lombok.*;
+import org.bukkit.inventory.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @AllArgsConstructor @Getter
 public enum SettingsEnum implements ISettingsEnum {
